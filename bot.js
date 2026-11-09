@@ -17,15 +17,18 @@ const datosMinecraft = {
   host: 'ElPuebleteMono.aternos.me',
   port: 24696,
   username: 'El_Primas777',
+  version: '26.3' 
 };
 
 let bot;
+let intervaloSalto;
 
 function iniciarNPC() {
   console.log('[MINECRAFT] Buscando el servidor ElPuebleteMono.aternos.me...');
   
   if (bot) {
     bot.removeAllListeners();
+    clearInterval(intervaloSalto); // Limpiar el temporizador si se reconecta
   }
 
   bot = mineflayer.createBot(datosMinecraft);
@@ -34,7 +37,20 @@ function iniciarNPC() {
   bot.on('spawn', () => {
     console.log('=================================');
     console.log('¡ÉXITO TOTAL! El_Primas777 entró al mundo.');
+    console.log('Activando sistema anti-AFK (Saltando)...');
     console.log('=================================');
+
+    // Hace que el bot salte automáticamente cada 4 segundos
+    intervaloSalto = setInterval(() => {
+      if (bot && bot.entity) {
+        bot.setControlState('jump', true);
+        
+        // Desactiva el salto una fracción de segundo después para que vuelva a tocar el suelo
+        setTimeout(() => {
+          if (bot && bot.entity) bot.setControlState('jump', false);
+        }, 500);
+      }
+    }, 4000); 
   });
 
   // Evento: Falló al intentar entrar
@@ -47,6 +63,7 @@ function iniciarNPC() {
   // Evento: Se cerró la sesión o el server de Aternos se apagó
   bot.on('end', () => {
     console.log('[MINECRAFT] Desconectado. Reintentando conectar automáticamente en 30 segundos...');
+    clearInterval(intervaloSalto); // Detener saltos si no está en el juego
     setTimeout(iniciarNPC, 30000);
   });
 }
