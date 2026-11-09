@@ -1,31 +1,31 @@
 const mineflayer = require('mineflayer');
 const http = require('http');
 
-// 1. SERVIDOR WEB INTERNO (OBLIGATORIO PARA RAILWAY)
+// 1. MONITOR WEB PARA EVITAR APAGADOS EN RAILWAY
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('El_Primas777 activo con parche de paquetes 26.3.\n');
+  res.end('El_Primas777 en linea.\n');
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`[WEB] Servidor de monitoreo activo.`);
+  console.log(`[WEB] Monitoreo activo en puerto ${PORT}`);
 });
 
-// 2. CONFIGURACIÓN DEL NPC
+// 2. CONFIGURACIÓN DEL NPC CON NEGOCIACIÓN AUTOMÁTICA
 const datosMinecraft = {
   host: 'ElPuebleteMono.aternos.me',
   port: 24696,
   username: 'El_Primas777',
-  version: '1.20.4', // Mantenemos la base que activó el login con ViaVersion
-  overrideUsingBundledVersion: true
+  // Quitamos la linea 'version' para permitir que Mineflayer y ViaVersion 
+  // hablen entre ellos libremente en la entrada del servidor
 };
 
 let bot;
 let intervaloSalto;
 
 function iniciarNPC() {
-  console.log('[MINECRAFT] Conectando con parche anti-kick de la 26.3...');
+  console.log('[MINECRAFT] Conectando mediante negociacion automatica...');
   
   if (bot) {
     bot.removeAllListeners();
@@ -34,30 +34,18 @@ function iniciarNPC() {
 
   bot = mineflayer.createBot(datosMinecraft);
 
-  // --- SOLUCIÓN DE PAQUETES PARA LA 26.3 ---
-  // Obliga al bot a mandar el cierre de tick al servidor en cada movimiento
-  bot.on('move', () => {
-    if (bot && bot._client) {
-      try {
-        bot._client.write('client_tick_end', {});
-      } catch (e) {
-        // Ignorar errores si el cliente aún se está construyendo
-      }
-    }
-  });
-
   bot.on('spawn', () => {
     console.log('=================================');
-    console.log('¡ÉXITO CONFIRMADO! El_Primas777 se ha quedado en el mundo.');
+    console.log('¡ÉXITO TOTAL! El_Primas777 se ha quedado en el mundo.');
     console.log('=================================');
 
-    // Rutina de salto básica anti-AFK cada 4 segundos
+    // Salta automáticamente cada 5 segundos para burlar el AFK
     intervaloSalto = setInterval(() => {
       if (bot && bot.entity) {
         bot.setControlState('jump', true);
         setTimeout(() => { if (bot && bot.entity) bot.setControlState('jump', false); }, 500);
       }
-    }, 4000);
+    }, 5000);
   });
 
   bot.on('error', (err) => {
@@ -65,11 +53,10 @@ function iniciarNPC() {
   });
 
   bot.on('end', () => {
-    console.log('[MINECRAFT] Conexión cerrada por el servidor. Reintentando en 20 segundos...');
+    console.log('[MINECRAFT] Sesión cerrada. Reintentando en 20 segundos...');
     clearInterval(intervaloSalto);
     setTimeout(iniciarNPC, 20000);
   });
 }
 
 iniciarNPC();
-
