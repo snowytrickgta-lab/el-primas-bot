@@ -4,7 +4,7 @@ const http = require('http');
 // MONITOR WEB PARA EVITAR APAGADOS EN RAILWAY
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('El_Primas777 activo en Spigot.\n');
+  res.end('El_Primas777 en linea mediante comandos de chat.\n');
 });
 
 const PORT = process.env.PORT || 3000;
@@ -20,17 +20,17 @@ const datosMinecraft = {
 };
 
 let bot;
-let intervaloSalto;
+let intervaloChat;
 
 function iniciarNPC() {
-  console.log('[MINECRAFT] Conectando con sincronizacion automatica para Spigot...');
+  console.log('[MINECRAFT] Conectando bot en modo estatico seguro...');
   
   if (bot) {
     bot.removeAllListeners();
-    clearInterval(intervaloSalto);
+    clearInterval(intervaloChat);
   }
 
-  // Iniciamos desactivando las fisicas de calculo para que Spigot no asuma caida libre
+  // Desactivamos completamente las fisicas para que se quede 100% quieto en el suelo
   bot = mineflayer.createBot({
     ...datosMinecraft,
     physicsEnabled: false
@@ -38,36 +38,31 @@ function iniciarNPC() {
 
   bot.on('spawn', () => {
     console.log('=================================');
-    console.log('¡El_Primas777 aparecido! Sincronizando con Spigot...');
+    console.log('¡ÉXITO TOTAL! El_Primas777 se ha quedado en el mundo.');
+    console.log('Modo estático activo. El bot no se moverá para evitar filtros.');
     console.log('=================================');
 
-    // Forzamos al bot a reportarse firmemente sobre el bloque en el spawn
-    if (bot.entity) {
-      bot.entity.onGround = true;
-    }
-
-    // Le damos 4 segundos de gracia flotando quieto
-    setTimeout(() => {
+    // En lugar de saltar, el bot ejecutará un comando en el chat cada 3 minutos
+    // Esto le demuestra al servidor que sigue activo sin activar el anti-cheat de movimiento
+    intervaloChat = setInterval(() => {
       if (bot) {
-        bot.physicsEnabled = true; // Activamos fisicas normales
-        console.log('[MINECRAFT] Bot estabilizado. Iniciando saltos.');
-
-        // Salto anti-AFK cada 5 segundos
-        intervaloSalto = setInterval(() => {
-          if (bot && bot.entity) {
-            bot.setControlState('jump', true);
-            setTimeout(() => { if (bot && bot.entity) bot.setControlState('jump', false); }, 500);
-          }
-        }, 5000);
+        // Ejecuta el comando /help. Puedes cambiarlo por otro comando si prefieres
+        bot.chat('/help'); 
+        console.log('[MINECRAFT] Comando anti-AFK enviado al chat de forma segura.');
       }
-    }, 4000);
+    }, 180000); // 180000 milisegundos = 3 minutos
+  });
+
+  bot.on('error', (err) => {
+    console.log(`[ERROR] ${err.message}`);
   });
 
   bot.on('end', () => {
-    console.log('[MINECRAFT] Conexion cerrada. Reintentando en 20 segundos...');
-    clearInterval(intervaloSalto);
+    console.log('[MINECRAFT] Conexión cerrada. Reintentando en 20 segundos...');
+    clearInterval(intervaloChat);
     setTimeout(iniciarNPC, 20000);
   });
 }
 
 iniciarNPC();
+
