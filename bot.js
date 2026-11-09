@@ -4,7 +4,7 @@ const http = require('http');
 // 1. SERVIDOR WEB INTERNO (OBLIGATORIO PARA RAILWAY)
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('El_Primas777 se encuentra activo en Minecraft 26.3.\n');
+  res.end('El_Primas777 activo en la version 26.3.\n');
 });
 
 const PORT = process.env.PORT || 3000;
@@ -12,19 +12,19 @@ server.listen(PORT, () => {
   console.log(`[WEB] Servidor de monitoreo encendido en el puerto ${PORT}`);
 });
 
-// 2. CONFIGURACIÓN DEL NPC CON EL PROTOCOLO DE LA VERSIÓN RECIENTE
+// 2. CONFIGURACIÓN DEL NPC CON INYECCIÓN DE DATOS NATIVOS
 const datosMinecraft = {
   host: 'ElPuebleteMono.aternos.me',
   port: 24696,
   username: 'El_Primas777',
-  version: '1.21' // Forzamos base estable para saltar el bloqueo de compatibilidad de Mineflayer
+  version: '26.3' // Ahora sí lo reconocerá gracias al nuevo paquete de datos
 };
 
 let bot;
 let intervaloSalto;
 
 function iniciarNPC() {
-  console.log('[MINECRAFT] Buscando el servidor ElPuebleteMono.aternos.me (26.3)...');
+  console.log('[MINECRAFT] Iniciando conexion nativa en la version 26.3...');
   
   if (bot) {
     bot.removeAllListeners();
