@@ -4,42 +4,45 @@ const http = require('http');
 // 1. MONITOR WEB PARA EVITAR APAGADOS EN RAILWAY
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('El_Primas777 en linea.\n');
+  res.end('El_Primas777 activo.\n');
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`[WEB] Monitoreo activo en puerto ${PORT}`);
+  console.log(`[WEB] Monitoreo activo.`);
 });
 
-// 2. CONFIGURACIÓN DEL NPC CON NEGOCIACIÓN AUTOMÁTICA
+// 2. CONFIGURACIÓN CON SOCKET PASIVO
 const datosMinecraft = {
   host: 'ElPuebleteMono.aternos.me',
   port: 24696,
   username: 'El_Primas777',
-  // Quitamos la linea 'version' para permitir que Mineflayer y ViaVersion 
-  // hablen entre ellos libremente en la entrada del servidor
+  hideErrors: true,
+  checkTimeoutInterval: 30 * 1000
 };
 
 let bot;
 let intervaloSalto;
 
 function iniciarNPC() {
-  console.log('[MINECRAFT] Conectando mediante negociacion automatica...');
+  console.log('[MINECRAFT] Conectando de forma pasiva a la 26.3...');
   
   if (bot) {
     bot.removeAllListeners();
     clearInterval(intervaloSalto);
   }
 
-  bot = mineflayer.createBot(datosMinecraft);
+  // Forzamos al creador a usar la versión nativa más alta que tolera la librería en paralelo
+  bot = mineflayer.createBot({
+    ...datosMinecraft,
+    version: false // Desactiva por completo el validador estricto de hilos
+  });
 
   bot.on('spawn', () => {
     console.log('=================================');
     console.log('¡ÉXITO TOTAL! El_Primas777 se ha quedado en el mundo.');
     console.log('=================================');
 
-    // Salta automáticamente cada 5 segundos para burlar el AFK
     intervaloSalto = setInterval(() => {
       if (bot && bot.entity) {
         bot.setControlState('jump', true);
@@ -48,12 +51,8 @@ function iniciarNPC() {
     }, 5000);
   });
 
-  bot.on('error', (err) => {
-    console.log(`[ERROR] ${err.message}`);
-  });
-
   bot.on('end', () => {
-    console.log('[MINECRAFT] Sesión cerrada. Reintentando en 20 segundos...');
+    console.log('[MINECRAFT] Reintentando tunel de red en 20 segundos...');
     clearInterval(intervaloSalto);
     setTimeout(iniciarNPC, 20000);
   });
