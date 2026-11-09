@@ -1,10 +1,10 @@
 const mineflayer = require('mineflayer');
 const http = require('http');
 
-// 1. SERVIDOR WEB INTERNO (OBLIGATORIO PARA HOSTINGS)
+// 1. SERVIDOR WEB INTERNO (OBLIGATORIO PARA RAILWAY)
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('El_Primas777 se encuentra activo.\n');
+  res.end('El_Primas777 se encuentra activo en Minecraft 26.3.\n');
 });
 
 const PORT = process.env.PORT || 3000;
@@ -12,23 +12,23 @@ server.listen(PORT, () => {
   console.log(`[WEB] Servidor de monitoreo encendido en el puerto ${PORT}`);
 });
 
-// 2. CONFIGURACIÓN DEL NPC (DATOS DE TU SERVIDOR DE ATERNOS)
+// 2. CONFIGURACIÓN DEL NPC CON EL PROTOCOLO DE LA VERSIÓN RECIENTE
 const datosMinecraft = {
   host: 'ElPuebleteMono.aternos.me',
   port: 24696,
   username: 'El_Primas777',
-  version: '26.3' 
+  version: '1.21' // Forzamos base estable para saltar el bloqueo de compatibilidad de Mineflayer
 };
 
 let bot;
 let intervaloSalto;
 
 function iniciarNPC() {
-  console.log('[MINECRAFT] Buscando el servidor ElPuebleteMono.aternos.me...');
+  console.log('[MINECRAFT] Buscando el servidor ElPuebleteMono.aternos.me (26.3)...');
   
   if (bot) {
     bot.removeAllListeners();
-    clearInterval(intervaloSalto); // Limpiar el temporizador si se reconecta
+    clearInterval(intervaloSalto);
   }
 
   bot = mineflayer.createBot(datosMinecraft);
@@ -36,7 +36,7 @@ function iniciarNPC() {
   // Evento: Entró al servidor correctamente
   bot.on('spawn', () => {
     console.log('=================================');
-    console.log('¡ÉXITO TOTAL! El_Primas777 entró al mundo.');
+    console.log('¡ÉXITO TOTAL! El_Primas777 entró al mundo en la 26.3.');
     console.log('Activando sistema anti-AFK (Saltando)...');
     console.log('=================================');
 
@@ -45,7 +45,6 @@ function iniciarNPC() {
       if (bot && bot.entity) {
         bot.setControlState('jump', true);
         
-        // Desactiva el salto una fracción de segundo después para que vuelva a tocar el suelo
         setTimeout(() => {
           if (bot && bot.entity) bot.setControlState('jump', false);
         }, 500);
@@ -63,7 +62,7 @@ function iniciarNPC() {
   // Evento: Se cerró la sesión o el server de Aternos se apagó
   bot.on('end', () => {
     console.log('[MINECRAFT] Desconectado. Reintentando conectar automáticamente en 30 segundos...');
-    clearInterval(intervaloSalto); // Detener saltos si no está en el juego
+    clearInterval(intervaloSalto);
     setTimeout(iniciarNPC, 30000);
   });
 }
