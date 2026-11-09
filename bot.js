@@ -4,27 +4,28 @@ const http = require('http');
 // 1. SERVIDOR WEB INTERNO (OBLIGATORIO PARA RAILWAY)
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('El_Primas777 activo en la version 26.3.\n');
+  res.end('El_Primas777 en linea.\n');
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`[WEB] Servidor de monitoreo encendido en el puerto ${PORT}`);
+  console.log(`[WEB] Servidor de monitoreo activo.`);
 });
 
-// 2. CONFIGURACIÓN DEL NPC CON INYECCIÓN DE DATOS NATIVOS
+// 2. CONFIGURACIÓN LIMPIA SIN FORZADOS RÍGIDOS
 const datosMinecraft = {
   host: 'ElPuebleteMono.aternos.me',
   port: 24696,
   username: 'El_Primas777',
-  version: '26.3' // Ahora sí lo reconocerá gracias al nuevo paquete de datos
+  // Eliminamos 'version' y 'overrideUsingBundledVersion' para que la librería 
+  // use de forma nativa el protocolo de enlace dinámico compatible con ViaVersion
 };
 
 let bot;
 let intervaloSalto;
 
 function iniciarNPC() {
-  console.log('[MINECRAFT] Iniciando conexion nativa en la version 26.3...');
+  console.log('[MINECRAFT] Conectando de forma limpia...');
   
   if (bot) {
     bot.removeAllListeners();
@@ -33,39 +34,29 @@ function iniciarNPC() {
 
   bot = mineflayer.createBot(datosMinecraft);
 
-  // Evento: Entró al servidor correctamente
   bot.on('spawn', () => {
     console.log('=================================');
-    console.log('¡ÉXITO TOTAL! El_Primas777 entró al mundo en la 26.3.');
-    console.log('Activando sistema anti-AFK (Saltando)...');
+    console.log('¡ÉXITO REAL! El_Primas777 se ha quedado en el mundo.');
     console.log('=================================');
 
-    // Hace que el bot salte automáticamente cada 4 segundos
+    // Rutina de salto básica anti-AFK cada 5 segundos
     intervaloSalto = setInterval(() => {
       if (bot && bot.entity) {
         bot.setControlState('jump', true);
-        
-        setTimeout(() => {
-          if (bot && bot.entity) bot.setControlState('jump', false);
-        }, 500);
+        setTimeout(() => { if (bot && bot.entity) bot.setControlState('jump', false); }, 500);
       }
-    }, 4000); 
+    }, 5000);
   });
 
-  // Evento: Falló al intentar entrar
   bot.on('error', (err) => {
-    console.log('--- ERROR DE CONEXIÓN ---');
-    console.log(`Mensaje: ${err.message}`);
-    console.log('-------------------------');
+    console.log(`[ERROR] ${err.message}`);
   });
 
-  // Evento: Se cerró la sesión o el server de Aternos se apagó
   bot.on('end', () => {
-    console.log('[MINECRAFT] Desconectado. Reintentando conectar automáticamente en 30 segundos...');
+    console.log('[MINECRAFT] Conexión cerrada. Reintentando en 20 segundos...');
     clearInterval(intervaloSalto);
-    setTimeout(iniciarNPC, 30000);
+    setTimeout(iniciarNPC, 20000);
   });
 }
 
-// Arrancar el ciclo de conexión
 iniciarNPC();
