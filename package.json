@@ -1,12 +1,1 @@
-{
-  "name": "el-primas-bot",
-  "version": "1.0.0",
-  "description": "Bot AFK para Minecraft Java en Aternos",
-  "main": "bot.js",
-  "scripts": {
-    "start": "node bot.js"
-  },
-  "dependencies": {
-    "mineflayer": "^4.22.0"
-  }
-}
+
