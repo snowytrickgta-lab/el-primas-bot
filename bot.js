@@ -1,76 +1,69 @@
 const mineflayer = require('mineflayer');
-const http = require('http');
 
-// MONITOR WEB PARA EVITAR APAGADOS EN RAILWAY
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('El_Primas777 en linea con parche real tick_end.\n');
-});
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`[WEB] Monitoreo activo.`);
-});
-
-// CONFIGURACIÓN DEL NPC
-const datosMinecraft = {
-  host: 'ElPuebleteMono.aternos.me',
-  port: 24696,
-  username: 'El_Primas777'
+const botOptions = {
+  host: 'ElPuebleteMono.aternos.me', 
+  port: 24696,                       
+  username: 'El_Primas777BOT', 
+  version: false 
 };
 
 let bot;
-let intervaloChat;
 
-function iniciarNPC() {
-  console.log('[MINECRAFT] Conectando con parche oficial de ciclo physicsTick...');
-  
-  if (bot) {
-    bot.removeAllListeners();
-    clearInterval(intervaloChat);
-  }
+function iniciarBot() {
+  bot = mineflayer.createBot(botOptions);
 
-  // Dejamos las físicas encendidas para que el bucle de ticks funcione de forma nativa
-  bot = mineflayer.createBot({
-    ...datosMinecraft,
-    physicsEnabled: true 
+  bot.on('login', () => {
+    console.log(`[${bot.username}] Conectando a Aternos...`);
+    if (bot.physics) {
+      bot.physics.enabled = false; 
+    }
+
+    const antiguoWrite = bot._client.write.bind(bot._client);
+    bot._client.write = function (name, params) {
+      if (name === 'position' || name === 'position_look' || name === 'look') {
+        return; 
+      }
+      return antiguoWrite(name, params);
+    };
   });
 
-  // --- EL PARCHE REAL DE GITHUB ---
-  // Ejecuta una escritura directa de 'client_tick_end' en cada ciclo físico del juego
-  bot.on('physicsTick', () => {
-    if (bot && bot._client) {
-      try {
-        bot._client.write('client_tick_end', {});
-      } catch (err) {
-        // Evita crasheos durante el proceso de desconexión
+  bot.once('spawn', () => {
+    console.log(`[${bot.username}] ¡Conectado! Pon una cama a mi lado para que pueda dormir.`);
+    if (bot.send_every_tick) {
+      bot.send_every_tick = false; 
+    }
+
+    process.stdin.removeAllListeners('data'); 
+    process.stdin.on('data', (data) => {
+      const mensaje = data.toString().trim();
+      if (mensaje.length > 0) bot.chat(mensaje);
+    });
+  });
+
+  // DETECTOR DE TIEMPO: Se activa cada vez que cambia la hora del juego
+  bot.on('time', () => {
+    // Si es de noche (tiempo entre 13000 y 23000 tics) y el bot no está durmiendo
+    if (bot.time.isNight && !bot.isSleeping) {
+      // Busca cualquier bloque de cama que esté a menos de 3 bloques de distancia
+      const camaBloque = bot.findBlock({
+        matching: block => block.name.includes('bed'),
+        maxDistance: 3
+      });
+
+      if (camaBloque) {
+        bot.sleep(camaBloque).catch(err => {
+          console.log(`[${bot.username}] No pude dormir: ${err.message}`);
+        });
       }
     }
   });
 
-  bot.on('spawn', () => {
-    console.log('=================================');
-    console.log('¡ÉXITO REAL! El_Primas777 está enviando paquetes en especificación.');
-    console.log('=================================');
-
-    // Rutina complementaria de chat para evitar el AFK de Aternos
-    intervaloChat = setInterval(() => {
-      if (bot) {
-        bot.chat('/help'); 
-        console.log('[MINECRAFT] Comando anti-AFK enviado.');
-      }
-    }, 120000);
+  bot.on('death', () => {
+    setTimeout(() => { bot.respawn(); }, 2000);
   });
 
-  bot.on('error', (err) => {
-    console.log(`[ERROR] ${err.message}`);
-  });
-
-  bot.on('end', () => {
-    console.log('[MINECRAFT] Conexión finalizada. Reintentando en 20 segundos...');
-    clearInterval(intervaloChat);
-    setTimeout(iniciarNPC, 20000);
-  });
+  bot.on('end', () => { setTimeout(iniciarBot, 5000); });
+  bot.on('error', (err) => { console.error('Error:', err); });
 }
 
-iniciarNPC();
+iniciarBot();
